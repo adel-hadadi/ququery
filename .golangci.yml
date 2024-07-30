@@ -1,0 +1,168 @@
+linters-settings:
+  asasalint:
+    exclude:
+      - \.Debugf
+      - \.Infof
+      - \.Warnf
+      - \.Errorf
+      - \.Fatalf
+    ignore-test: true
+
+  errcheck:
+    check-type-assertions: true
+
+  gocyclo:
+    min-complexity: 10
+
+  dupl:
+    threshold: 400
+
+  goconst:
+    min-len: 2
+    min-occurrences: 3
+    ignore-tests: true
+
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - experimental
+      - opinionated
+      - performance
+      - style
+    settings:
+      hugeParam:
+        sizeThreshold: 500
+
+  gomnd:
+    checks:
+      - argument
+      - case
+      - condition
+      - operation
+      - return
+      - assign
+    ignored-numbers:
+      - "0"
+      - "1"
+      - "2"
+      - "3"
+      - "4"
+      - "5"
+      - "6"
+      - "7"
+      - "8"
+      - "9"
+      - "10"
+      - "11"
+      - "12"
+      - "0666"
+      - "0755"
+    ignored-functions:
+      - '^math\.'
+      - '^context\.'
+
+  govet:
+    enable:
+      - fieldalignment
+      - nilfunc
+      - nilness
+
+  revive:
+    severity: error
+    enable-all-rules: true
+    confidence: 0.8
+    rules:
+      - name: unused-parameter
+        severity: warning
+        disabled: false
+        arguments:
+          - allowRegex: "tx"
+      - name: unused-receiver
+        severity: warning
+        disabled: false
+        arguments:
+          - allowRegex: "."
+      - name: line-length-limit
+        severity: warning
+        disabled: true
+        arguments: [80]
+      - name: unchecked-type-assertion
+        severity: warning
+        disabled: true
+      - name: add-constant
+        severity: warning
+        disabled: false
+        arguments:
+          - maxLitCount: "10"
+            allowStrs: '""'
+            allowInts: "0,1,2,3,4,5,6,7,8,9,10,11,12"
+      - name: cognitive-complexity
+        severity: warning
+        disabled: true
+        arguments: [10]
+      - name: max-public-structs
+        severity: warning
+        disabled: false
+        arguments: [10]
+
+  nolintlint:
+    require-explanation: true
+    require-specific: true
+
+  depguard:
+    rules:
+      main:
+        files:
+          - "!**/*_a _file.go"
+        allow:
+          - $gostd
+          - github.com/rezakhdemix
+          - github.com/redis
+        deny:
+          - pkg: "github.com/pkg/errors"
+            desc: should be replaced by standard lib errors package
+
+linters:
+  disable-all: true
+  enable:
+    - asasalint
+    - cyclop
+    # - depguard
+    - dupl
+    - errcheck
+    # - errorlint # will check %w error and type assertion on error will fail on wrapped errors
+    - exhaustive
+    - goconst
+    - gocritic # must be enabled
+    # - godox # will check todos, bug, fixme
+    - gocyclo
+    - gomnd
+    - gosimple
+    - gosec
+    - govet # must be enabled
+    - misspell
+    - musttag
+    - perfsprint
+    - prealloc
+    - predeclared
+    - usestdlibvars
+    - whitespace
+    - wsl
+    - revive # must be enabled
+    - bodyclose
+    - exportloopref
+    - ineffassign
+    - nolintlint
+    - stylecheck
+    - unconvert
+
+run:
+  issues-exit-code: 1
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - gosec
+        - dupl

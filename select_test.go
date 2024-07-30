@@ -1,0 +1,144 @@
+package ququery_test
+
+import (
+	"testing"
+
+	"github.com/adel-hadadi/ququery"
+	"github.com/adel-hadadi/ququery/testutil"
+)
+
+func TestSelectQuery_Columns(t *testing.T) {
+	testcases := testutil.Testcases{
+		"select columns": testutil.Testcase{
+			Query:        ququery.Select("users").Columns("id", "name"),
+			ExpectedSQL:  "SELECT id, name FROM users",
+			Doc:          "select columns query",
+			ExpectedArgs: nil,
+		},
+
+		"select all columns when not determined them": testutil.Testcase{
+			Query:       ququery.Select("users"),
+			ExpectedSQL: "SELECT * FROM users",
+			Doc:         "select all columns of table when columns not defineded",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
+
+func TestSelectQuery_Where(t *testing.T) {
+	testcases := testutil.Testcases{
+		"simple select with where": testutil.Testcase{
+			Query:        ququery.Select("users").Where("id"),
+			ExpectedSQL:  "SELECT * FROM users WHERE id = $1",
+			ExpectedArgs: nil,
+			Doc:          "Simple select query with where",
+		},
+
+		"where and orWhere": testutil.Testcase{
+			Query:        ququery.Select("users").Where("status").OrWhere("role_id"),
+			ExpectedSQL:  "SELECT * FROM users WHERE status = $1 OR role_id = $2",
+			ExpectedArgs: nil,
+			Doc:          "Select query with where and or where",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
+
+func TestSelectQuery_Join(t *testing.T) {
+	testcases := testutil.Testcases{
+		"simple join on select": testutil.Testcase{
+			Query: ququery.Select("users").
+				Columns("id").
+				Join("wallets", "wallets.id = users.id"),
+			ExpectedSQL:  "SELECT id FROM users LEFT JOIN wallets ON wallets.id = users.id",
+			ExpectedArgs: nil,
+			Doc:          "simple select on users table and load users wallet",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
+
+func TestSelectQuery_StrPos(t *testing.T) {
+	testcases := testutil.Testcases{
+		"select query with check string posititon": testutil.Testcase{
+			Query:       ququery.Select("users").StrPos("name"),
+			ExpectedSQL: "SELECT * FROM users WHERE (STRPOS(name, $1) > 0 OR $2 = '')",
+			Doc:         "Select query with check string position",
+		},
+
+		"select query with conditions and or string position": testutil.Testcase{
+			Query:       ququery.Select("users").Where("id").OrStrPos("email"),
+			ExpectedSQL: "SELECT * FROM users WHERE id = $1 OR (STRPOS(email, $2) > 0 OR $3 = '')",
+			Doc:         "Select query with where and or string position check",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
+
+func TestSelectQuery_MultiWhere(t *testing.T) {
+	testcases := testutil.Testcases{
+		"select query with multi where": testutil.Testcase{
+			Query: ququery.Select("users").MultiWhere(func(subQuery ququery.MultiWhere) string {
+				return subQuery.Where("email").
+					Where("role_id").
+					OrWhere("type").
+					Query()
+			}),
+			ExpectedSQL: "SELECT * FROM users WHERE ( email = $1 AND role_id = $2 OR type = $3)",
+			Doc:         "select query with group of where conditions",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
+
+func TestSelectQuery_WhereInSubQuery(t *testing.T) {
+	testcases := testutil.Testcases{
+		"select query with where in subquery": testutil.Testcase{
+			Query: ququery.Select("users").WhereInSubquery("users.id", func(q ququery.SelectQuery) string {
+				return q.Table("orders").
+					Columns("user_id").
+					OrderBy("total_price", "desc").
+					Limit().
+					Query()
+			}),
+			ExpectedSQL: "SELECT * FROM users WHERE users.id IN (SELECT user_id FROM orders ORDER BY total_price DESC LIMIT $1)",
+			Doc:         "Select query with where in subquery to other table",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
+
+func TestSelectQuery_With(t *testing.T) {
+	testcases := testutil.Testcases{
+		"select query with load realations": testutil.Testcase{
+			Query:       ququery.Select("users").With("role"),
+			ExpectedSQL: "SELECT * FROM users LEFT JOIN roles ON roles.id = users.role_id",
+			Doc:         "Select all users with role",
+		},
+		"select query with load relations that contain y in name": testutil.Testcase{
+			Query:       ququery.Select("users").With("city"),
+			ExpectedSQL: "SELECT * FROM users LEFT JOIN cities ON cities.id = users.city_id",
+			Doc:         "Select all users with city",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
+
+func TestSelectQuery_LimitAndOffset(t *testing.T) {
+	testcases := testutil.Testcases{
+		"select query with limit and offset": testutil.Testcase{
+			Query:       ququery.Select("users").Limit().Offset(),
+			ExpectedSQL: "SELECT * FROM users LIMIT $1 OFFSET $2",
+			Doc:         "select query by limit and offset",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
