@@ -1,3 +1,5 @@
+[![Go Report Card](https://goreportcard.com/badge/github.com/adel-hadadi/ququery)](https://goreportcard.com/report/github.com/adel-hadadi/ququery) 
+
 # QuQuery: Golang SQL Builder
 
 ```
@@ -166,12 +168,12 @@ func main() {
 
 Select query have many other methods that we list them below.
 
-| Method | Description |
-| -------------- | --------------- |
-| OrderBy | take column name and sort direction to order items |
-| Limit | for taking a limited rows from database |
-| Offset | specify where to start taking rows |
-| Table | if you get `SelectQuery` structure with different way `Select` method, can set table name with this method |
+| Method  | Description                                                                                                |
+| ------- | ---------------------------------------------------------------------------------------------------------- |
+| OrderBy | take column name and sort direction to order items                                                         |
+| Limit   | for taking a limited rows from database                                                                    |
+| Offset  | specify where to start taking rows                                                                         |
+| Table   | if you get `SelectQuery` structure with different way `Select` method, can set table name with this method |
 
 ## Insert
 Insert method give a `InsertQuery` structure which come with low number of methods
