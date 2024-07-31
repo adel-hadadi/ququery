@@ -1,5 +1,14 @@
 # QuQuery: Golang SQL Builder
 
+```
+   ____                                   
+  / __ \__  ______ ___  _____  _______  __
+ / / / / / / / __ `/ / / / _ \/ ___/ / / /
+/ /_/ / /_/ / /_/ / /_/ /  __/ /  / /_/ / 
+\___\_\__,_/\__, /\__,_/\___/_/   \__, /  
+              /_/                /____/   
+
+```
 
 ## About
 QuQuery is simple and efficient query builder that provide zero dependency and zero type reflection in your code base so come to make our repositories more beautiful 😉.
