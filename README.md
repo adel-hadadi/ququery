@@ -1,5 +1,6 @@
 # QuQuery: Golang SQL Builder
 
+
 ## About
 QuQuery is simple and efficient query builder that provide zero dependency and zero type reflection in your code base so come to make our repositories more beautiful ;).
 
@@ -30,7 +31,7 @@ go get github.com/adel-hadadi/ququery@latest
 
 Every database operation such as (`UPDATE`, `INSERT`, `DELETE`, `SELECT`) in ququery have specific methods and they can be different from other one so let's explain each operation methods one by one.
 
-### Select
+## Select
 first and most important operation that exists is `select` query that come with some cool methods. For creating new select query use below example:
 ```go
 package main
@@ -71,12 +72,12 @@ func main() {
     query := ququery.Select("users").Where("id").Query()
     // query => SELECT * FROM users WHERE id = $1
 
-    query = ququery.Select("users").Where("id", "!=")
+    query = ququery.Select("users").Where("id", "!=").Query()
     // query => SELECT * FROM users WHERE id != $1
 }
 ```
 
-Also can use `OrWhere` for alternative conditions
+Also can use `OrWhere` for checking that any one condition is true
 ```go
 package main
 
@@ -103,3 +104,127 @@ func main() {
 
 ```
 
+For using `WHERE IN (subquery)` query can use `WhereInSubquery` that take column and a function with `SelectQuery` structure and should return a query.
+
+```go
+
+package main
+
+import "github.com/adel-hadadi/ququery"
+
+func main() {
+    query := ququery.Select("users").
+        WhereInSubquery("id", func (q SelectQuery) string {
+            return q.Table("orders").
+                Column("user_id")
+                Where("price", ">=").
+                Query()
+        }).
+        Query()
+    // query => SELECT * FROM users WHERE id IN (SELECT user_id FROM orders where price >= $1)
+}
+
+```
+
+### Join
+With Join method can load relations.
+
+```go
+package main
+
+import "github.com/adel-hadadi/ququery"
+
+func main() {
+    query := ququery.Select("products").Join("categories", "categories.id = product.category_id").Query()
+    // query => SELECT * FROM users LEFT JOIN categories ON categories.id = product.category_id
+}
+```
+
+But if you want to load one to many relations like above you can just simply use `With` method that take list of entity names and load them.
+
+```go
+package main
+
+import "github.com/adel-hadadi/ququery"
+
+func main() {
+    query := ququery.Select("products").
+        With("category", "warehouse", "brand").
+        Query()
+    // query => SELECT * FROM users LEFT JOIN categories ON categories.id = products.category_id LEFT JOIN warehouses ON warehouses.id = products.warehouse_id LEFT JOIN brands.id = products.brand_id
+}
+```
+
+Select query have many other methods that we list them below.
+
+| Method | Description |
+| -------------- | --------------- |
+| OrderBy | take column name and sort direction to order items |
+| Limit | for taking a limited rows from database |
+| Offset | specify where to start taking rows |
+| Table | if you get `SelectQuery` structure with different way `Select` method, can set table name with this method |
+
+## Insert
+Insert method give a `InsertQuery` structure which come with low number of methods
+
+### Into
+First and important method that come with `InsertQuery` structure is this method that specify insert query columns.
+```go
+package main
+
+import "github.com/adel-hadadi/ququery"
+
+func main() {
+    query := ququery.Insert("users").Into("name", "email").Query()
+    // query => INSERT INTO users (name, email) VALUES($1, $2)
+}
+```
+
+### Returning
+This method specify columns that you want to return after that insert query successfully executed.
+```go
+package main
+
+import "github.com/adel-hadadi/ququery"
+
+func main() {
+    query := ququery.Insert("users").
+        Into("name", "email").
+        Returning("id").
+        Query()
+    // query => INSERT INTO users (name, email) VALUES ($1, $2) RETURNING (id)
+}
+```
+
+## Update
+### Set
+For specify columns that you want change them you should use `Set` method.
+Also `UpdateQuery` have `Where` and `OrWhere` method that can be used together.
+```go
+package main
+
+import "github.com/adel-hadadi/ququery"
+
+func main() {
+    query := ququery.Update("users").
+        set("name").
+        Where("id").
+        Query()
+    // query => UPDATE users SET name = $1 WHERE id = $2
+}
+```
+
+## Exists
+Exists query is used for checking that any row with exists with given conditions or not. This query have `Where` and `OrWhere` method.
+```go
+package main
+
+import "github.com/adel-hadadi/ququery"
+
+func main() {
+    query := ququery.Exists("users").
+        Where("email").
+        Query()
+    // query => SELECT EXISTS (SELECT true FROM users WHERE email = $1)
+}
+```
