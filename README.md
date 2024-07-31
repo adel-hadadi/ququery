@@ -2,7 +2,7 @@
 
 
 ## About
-QuQuery is simple and efficient query builder that provide zero dependency and zero type reflection in your code base so come to make our repositories more beautiful ;).
+QuQuery is simple and efficient query builder that provide zero dependency and zero type reflection in your code base so come to make our repositories more beautiful 😉.
 
 ## Why Ququery builted
 When I was learning Golang, I noticed that many people coding in Golang for the first time were using GORM. However, after a short period of using GORM, I found myself dealing with convoluted code that I couldn't understand, and it often didn't work as expected.
