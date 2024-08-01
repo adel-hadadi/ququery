@@ -174,6 +174,8 @@ Select query have many other methods that we list them below.
 | Limit   | for taking a limited rows from database                                                                    |
 | Offset  | specify where to start taking rows                                                                         |
 | Table   | if you get `SelectQuery` structure with different way `Select` method, can set table name with this method |
+| WhereNull   | get rows where specific column value is null |
+| WhereNotNull   | get rows where specific column value is not null |
 
 ## Insert
 Insert method give a `InsertQuery` structure which come with low number of methods
