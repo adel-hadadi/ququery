@@ -142,3 +142,37 @@ func TestSelectQuery_LimitAndOffset(t *testing.T) {
 
 	testutil.RunTests(t, testcases, nil)
 }
+
+func TestSelectQuery_WhereNotNull(t *testing.T) {
+	testcases := testutil.Testcases{
+		"select query with where not null": testutil.Testcase{
+			Query:       ququery.Select("users").WhereNotNull("email"),
+			ExpectedSQL: "SELECT * FROM users WHERE email IS NOT NULL",
+			Doc:         "select users where email value is not null",
+		},
+		"select query with or where not null": testutil.Testcase{
+			Query:       ququery.Select("users").Where("email").OrWhereNotNull("role_id"),
+			ExpectedSQL: "SELECT * FROM users WHERE email = $1 OR role_id IS NOT NULL",
+			Doc:         "select users where email value is not null",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}
+
+func TestSelectQuery_WhereNull(t *testing.T) {
+	testcases := testutil.Testcases{
+		"select query with where null": testutil.Testcase{
+			Query:       ququery.Select("users").WhereNull("deleted_at"),
+			ExpectedSQL: "SELECT * FROM users WHERE deleted_at IS NULL",
+			Doc:         "select users where deleted_at is null",
+		},
+		"select query with or where null": testutil.Testcase{
+			Query:       ququery.Select("users").Where("status").OrWhereNull("deleted_at"),
+			ExpectedSQL: "SELECT * FROM users WHERE status = $1 OR deleted_at IS NULL",
+			Doc:         "select users where status is specific value or  deleted_at is null",
+		},
+	}
+
+	testutil.RunTests(t, testcases, nil)
+}

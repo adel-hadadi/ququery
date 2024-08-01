@@ -52,6 +52,58 @@ func (q SelectQuery) OrWhere(condition ...string) SelectQuery {
 	return q
 }
 
+// WhereNotNull get rows where column values is not null
+func (q SelectQuery) WhereNotNull(column string) SelectQuery {
+	q.conditions = append(q.conditions, whereStructure{
+		column:   "",
+		operator: "",
+		isAnd:    true,
+		isRaw:    true,
+		rawQuery: column + " IS NOT NULL",
+	})
+
+	return q
+}
+
+// OrWhereNull get rows where column values is not null or previous condition is true
+func (q SelectQuery) OrWhereNotNull(column string) SelectQuery {
+	q.conditions = append(q.conditions, whereStructure{
+		column:   "",
+		operator: "",
+		isAnd:    false,
+		isRaw:    true,
+		rawQuery: column + " IS NOT NULL",
+	})
+
+	return q
+}
+
+// WhereNull get rows where column value is null
+func (q SelectQuery) WhereNull(column string) SelectQuery {
+	q.conditions = append(q.conditions, whereStructure{
+		column:   "",
+		operator: "",
+		isAnd:    true,
+		isRaw:    true,
+		rawQuery: column + " IS NULL",
+	})
+
+	return q
+}
+
+// OrWhereNull get rows where column values is null or previous condition is true
+func (q SelectQuery) OrWhereNull(column string) SelectQuery {
+	q.conditions = append(q.conditions, whereStructure{
+		column:   "",
+		operator: "",
+		isAnd:    false,
+		isRaw:    true,
+		rawQuery: column + " IS NULL",
+	})
+
+	return q
+}
+
 func (q SelectQuery) StrPos(column string) SelectQuery {
 	q.conditions = append(q.conditions, whereStructure{
 		column:   "",
