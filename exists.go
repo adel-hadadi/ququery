@@ -7,25 +7,25 @@ import (
 )
 
 type ExistsQuery struct {
-	whereContainer *WhereContainer
+	whereContainer *whereContainer
 	table          string
 }
 
 func Exists(table string) ExistsQuery {
 	return ExistsQuery{
 		table:          table,
-		whereContainer: &WhereContainer{},
+		whereContainer: &whereContainer{},
 	}
 }
 
 func (q ExistsQuery) Where(condition ...string) ExistsQuery {
-	q.whereContainer.Where(condition...)
+	q.whereContainer.where(condition...)
 
 	return q
 }
 
 func (q ExistsQuery) OrWhere(condition ...string) ExistsQuery {
-	q.whereContainer.OrWhere(condition...)
+	q.whereContainer.orWhere(condition...)
 
 	return q
 }

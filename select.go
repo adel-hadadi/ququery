@@ -8,27 +8,27 @@ import (
 )
 
 type SelectQuery struct {
-	table   string
-	columns []string
-	*WhereContainer
-	joins     [][]string
-	orderBy   []string
-	hasLimit  bool
-	hasOffset bool
+	table          string
+	columns        []string
+	whereContainer *whereContainer
+	joins          [][]string
+	orderBy        []string
+	hasLimit       bool
+	hasOffset      bool
 }
 
 func Select(table string) SelectQuery {
 	return SelectQuery{
 		table:          table,
-		WhereContainer: &WhereContainer{},
+		whereContainer: &whereContainer{},
 	}
 }
 
 func (q SelectQuery) Table(table string) SelectQuery {
 	q.table = table
 
-	if q.WhereContainer == nil {
-		q.WhereContainer = &WhereContainer{}
+	if q.whereContainer == nil {
+		q.whereContainer = &whereContainer{}
 	}
 
 	return q
@@ -40,116 +40,67 @@ func (q SelectQuery) Columns(columns ...string) SelectQuery {
 	return q
 }
 
+// Where get rows where column
 func (q SelectQuery) Where(condition ...string) SelectQuery {
-	q.WhereContainer.Where(condition...)
+	q.whereContainer.where(condition...)
 
 	return q
 }
 
 func (q SelectQuery) OrWhere(condition ...string) SelectQuery {
-	q.WhereContainer.OrWhere(condition...)
+	q.whereContainer.orWhere(condition...)
 
 	return q
 }
 
 // WhereNotNull get rows where column values is not null
 func (q SelectQuery) WhereNotNull(column string) SelectQuery {
-	q.conditions = append(q.conditions, whereStructure{
-		column:   "",
-		operator: "",
-		isAnd:    true,
-		isRaw:    true,
-		rawQuery: column + " IS NOT NULL",
-	})
+	q.whereContainer.whereNotNull(column)
 
 	return q
 }
 
 // OrWhereNull get rows where column values is not null or previous condition is true
 func (q SelectQuery) OrWhereNotNull(column string) SelectQuery {
-	q.conditions = append(q.conditions, whereStructure{
-		column:   "",
-		operator: "",
-		isAnd:    false,
-		isRaw:    true,
-		rawQuery: column + " IS NOT NULL",
-	})
+	q.whereContainer.orWhereNotNull(column)
 
 	return q
 }
 
 // WhereNull get rows where column value is null
 func (q SelectQuery) WhereNull(column string) SelectQuery {
-	q.conditions = append(q.conditions, whereStructure{
-		column:   "",
-		operator: "",
-		isAnd:    true,
-		isRaw:    true,
-		rawQuery: column + " IS NULL",
-	})
+	q.whereContainer.whereNull(column)
 
 	return q
 }
 
 // OrWhereNull get rows where column values is null or previous condition is true
 func (q SelectQuery) OrWhereNull(column string) SelectQuery {
-	q.conditions = append(q.conditions, whereStructure{
-		column:   "",
-		operator: "",
-		isAnd:    false,
-		isRaw:    true,
-		rawQuery: column + " IS NULL",
-	})
+	q.whereContainer.orWhereNull(column)
 
 	return q
 }
 
 func (q SelectQuery) StrPos(column string) SelectQuery {
-	q.conditions = append(q.conditions, whereStructure{
-		column:   "",
-		operator: "",
-		isAnd:    true,
-		isRaw:    true,
-		rawQuery: fmt.Sprintf("(STRPOS(%s, ?) > 0 OR ? = '')", column),
-	})
+	q.whereContainer.strpos(column)
 
 	return q
 }
 
 func (q SelectQuery) OrStrPos(column string) SelectQuery {
-	q.conditions = append(q.conditions, whereStructure{
-		column:   "",
-		operator: "",
-		rawQuery: fmt.Sprintf("(STRPOS(%s, ?) > 0 OR ? = '')", column),
-		isAnd:    false,
-		isRaw:    true,
-	})
+	q.whereContainer.orStrpos(column)
 
 	return q
 }
 
 func (q SelectQuery) MultiWhere(f func(subQuery MultiWhere) string) SelectQuery {
-	query := f(MultiWhere{})
-
-	q.conditions = append(q.conditions, whereStructure{
-		column:   "",
-		operator: "",
-		isAnd:    true,
-		isRaw:    true,
-		rawQuery: query,
-	})
+	q.whereContainer.multiWhere(f)
 
 	return q
 }
 
 func (q SelectQuery) WhereInSubquery(column string, subQuery func(q SelectQuery) string) SelectQuery {
-	q.conditions = append(q.conditions, whereStructure{
-		column:   "",
-		operator: "",
-		rawQuery: fmt.Sprintf("%s IN (%s)", column, subQuery(SelectQuery{})),
-		isAnd:    true,
-		isRaw:    true,
-	})
+	q.whereContainer.whereInSubquery(column, subQuery)
 
 	return q
 }
@@ -204,8 +155,8 @@ func (q SelectQuery) prepareSelectQuery() string {
 		query += " " + q.prepareJoinQuery(q.joins)
 	}
 
-	if len(q.WhereContainer.conditions) > 0 {
-		query += " " + prepareWhereQuery(q.WhereContainer.conditions)
+	if len(q.whereContainer.conditions) > 0 {
+		query += " " + prepareWhereQuery(q.whereContainer.conditions)
 	}
 
 	if len(q.orderBy) > 0 {
