@@ -1,4 +1,5 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/adel-hadadi/ququery)](https://goreportcard.com/report/github.com/adel-hadadi/ququery) 
+[![codecov](https://codecov.io/github/adel-hadadi/ququery/graph/badge.svg?token=IkdEDjVmb4)](https://codecov.io/github/adel-hadadi/ququery)
 
 # QuQuery: Golang SQL Builder
 
