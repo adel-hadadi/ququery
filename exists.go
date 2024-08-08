@@ -7,34 +7,22 @@ import (
 )
 
 type ExistsQuery struct {
-	whereContainer *whereContainer
-	table          string
+	table string
+	WhereContainer[*ExistsQuery]
 }
 
-func Exists(table string) ExistsQuery {
-	return ExistsQuery{
-		table:          table,
-		whereContainer: &whereContainer{},
-	}
+func Exists(table string) *ExistsQuery {
+	e := &ExistsQuery{table: table}
+	e.WhereContainer = WhereContainer[*ExistsQuery]{self: e}
+
+	return e
 }
 
-func (q ExistsQuery) Where(condition ...string) ExistsQuery {
-	q.whereContainer.where(condition...)
-
-	return q
-}
-
-func (q ExistsQuery) OrWhere(condition ...string) ExistsQuery {
-	q.whereContainer.orWhere(condition...)
-
-	return q
-}
-
-func (q ExistsQuery) Query() string {
+func (q *ExistsQuery) Query() string {
 	query := fmt.Sprintf(
 		"SELECT EXISTS(SELECT true FROM %s %s)",
 		q.table,
-		prepareWhereQuery(q.whereContainer.conditions),
+		prepareWhereQuery(q.conditions),
 	)
 
 	return sqlx.Rebind(sqlx.DOLLAR, query)

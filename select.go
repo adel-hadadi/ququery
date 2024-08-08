@@ -8,111 +8,44 @@ import (
 )
 
 type SelectQuery struct {
-	table          string
-	columns        []string
-	whereContainer *whereContainer
-	joins          [][]string
-	orderBy        []string
-	hasLimit       bool
-	hasOffset      bool
+	table   string
+	columns []string
+	WhereContainer[*SelectQuery]
+	joins     [][]string
+	orderBy   []string
+	hasLimit  bool
+	hasOffset bool
 }
 
-func Select(table string) SelectQuery {
-	return SelectQuery{
-		table:          table,
-		whereContainer: &whereContainer{},
-	}
+func Select(table string) *SelectQuery {
+	s := &SelectQuery{table: table}
+	s.WhereContainer = WhereContainer[*SelectQuery]{self: s}
+
+	return s
 }
 
-func (q SelectQuery) Table(table string) SelectQuery {
+func (q *SelectQuery) Table(table string) *SelectQuery {
 	q.table = table
 
-	if q.whereContainer == nil {
-		q.whereContainer = &whereContainer{}
-	}
+	q.WhereContainer = WhereContainer[*SelectQuery]{self: q}
 
 	return q
 }
 
-func (q SelectQuery) Columns(columns ...string) SelectQuery {
+func (q *SelectQuery) Columns(columns ...string) *SelectQuery {
 	q.columns = columns
 
 	return q
 }
 
-// Where get rows where column
-func (q SelectQuery) Where(condition ...string) SelectQuery {
-	q.whereContainer.where(condition...)
-
-	return q
-}
-
-func (q SelectQuery) OrWhere(condition ...string) SelectQuery {
-	q.whereContainer.orWhere(condition...)
-
-	return q
-}
-
-// WhereNotNull get rows where column values is not null
-func (q SelectQuery) WhereNotNull(column string) SelectQuery {
-	q.whereContainer.whereNotNull(column)
-
-	return q
-}
-
-// OrWhereNull get rows where column values is not null or previous condition is true
-func (q SelectQuery) OrWhereNotNull(column string) SelectQuery {
-	q.whereContainer.orWhereNotNull(column)
-
-	return q
-}
-
-// WhereNull get rows where column value is null
-func (q SelectQuery) WhereNull(column string) SelectQuery {
-	q.whereContainer.whereNull(column)
-
-	return q
-}
-
-// OrWhereNull get rows where column values is null or previous condition is true
-func (q SelectQuery) OrWhereNull(column string) SelectQuery {
-	q.whereContainer.orWhereNull(column)
-
-	return q
-}
-
-func (q SelectQuery) StrPos(column string) SelectQuery {
-	q.whereContainer.strpos(column)
-
-	return q
-}
-
-func (q SelectQuery) OrStrPos(column string) SelectQuery {
-	q.whereContainer.orStrpos(column)
-
-	return q
-}
-
-func (q SelectQuery) MultiWhere(f func(subQuery MultiWhere) string) SelectQuery {
-	q.whereContainer.multiWhere(f)
-
-	return q
-}
-
-func (q SelectQuery) WhereInSubquery(column string, subQuery func(q SelectQuery) string) SelectQuery {
-	q.whereContainer.whereInSubquery(column, subQuery)
-
-	return q
-}
-
-func (q SelectQuery) Join(table string, conditions ...string) SelectQuery {
+func (q *SelectQuery) Join(table string, conditions ...string) *SelectQuery {
 	q.joins = append(q.joins, append([]string{table}, conditions...))
 
 	return q
 }
 
 // With can load one-to-many relations without need to pass join column
-func (q SelectQuery) With(entities ...string) SelectQuery {
+func (q *SelectQuery) With(entities ...string) *SelectQuery {
 	for _, entity := range entities {
 		table := findTableFromEntity(entity)
 
@@ -125,25 +58,25 @@ func (q SelectQuery) With(entities ...string) SelectQuery {
 	return q
 }
 
-func (q SelectQuery) OrderBy(column, direction string) SelectQuery {
+func (q *SelectQuery) OrderBy(column, direction string) *SelectQuery {
 	q.orderBy = []string{column, direction}
 
 	return q
 }
 
-func (q SelectQuery) Limit() SelectQuery {
+func (q *SelectQuery) Limit() *SelectQuery {
 	q.hasLimit = true
 
 	return q
 }
 
-func (q SelectQuery) Offset() SelectQuery {
+func (q *SelectQuery) Offset() *SelectQuery {
 	q.hasOffset = true
 
 	return q
 }
 
-func (q SelectQuery) prepareSelectQuery() string {
+func (q *SelectQuery) prepareSelectQuery() string {
 	columns := strings.Join(q.columns, ", ")
 	if len(q.columns) == 0 {
 		columns = "*"
@@ -155,8 +88,8 @@ func (q SelectQuery) prepareSelectQuery() string {
 		query += " " + q.prepareJoinQuery(q.joins)
 	}
 
-	if len(q.whereContainer.conditions) > 0 {
-		query += " " + prepareWhereQuery(q.whereContainer.conditions)
+	if len(q.conditions) > 0 {
+		query += " " + prepareWhereQuery(q.conditions)
 	}
 
 	if len(q.orderBy) > 0 {
@@ -174,17 +107,17 @@ func (q SelectQuery) prepareSelectQuery() string {
 	return strings.TrimSpace(strings.ReplaceAll(strings.ReplaceAll(query, "\n", ""), "\t", ""))
 }
 
-func (q SelectQuery) Query() string {
+func (q *SelectQuery) Query() string {
 	query := q.prepareSelectQuery()
 
 	return sqlx.Rebind(sqlx.DOLLAR, query)
 }
 
-func (q SelectQuery) QueryWithoutRebinding() string {
+func (q *SelectQuery) QueryWithoutRebinding() string {
 	return q.prepareSelectQuery()
 }
 
-func (q SelectQuery) prepareJoinQuery(joins [][]string) string {
+func (q *SelectQuery) prepareJoinQuery(joins [][]string) string {
 	var joinQuery string
 
 	for _, join := range joins {

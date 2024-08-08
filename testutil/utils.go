@@ -6,7 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/adel-hadadi/ququery"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -16,7 +15,7 @@ type Testcases map[string]Testcase
 type Testcase struct {
 	ExpectedSQL  string
 	Doc          string
-	Query        ququery.Query
+	Query        string
 	ExpectedArgs []any
 }
 
@@ -66,15 +65,13 @@ func RunTests(t *testing.T, cases Testcases, format FormatFunc) {
 
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
-			sql := tc.Query.Query()
-
-			diff, err := QueryDiff(tc.ExpectedSQL, sql, format)
+			diff, err := QueryDiff(tc.ExpectedSQL, tc.Query, format)
 			if err != nil {
 				t.Fatalf("error: %v", err)
 			}
 
 			if diff != "" {
-				fmt.Println(sql)
+				fmt.Println(tc.Query)
 				t.Fatalf("diff: %s", diff)
 			}
 		})

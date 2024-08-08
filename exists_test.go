@@ -10,7 +10,10 @@ import (
 func TestExistsQuery_Exists(t *testing.T) {
 	testcases := testutil.Testcases{
 		"simple check exists query with condition": testutil.Testcase{
-			Query:       ququery.Exists("users").Where("email").OrWhere("id"),
+			Query: ququery.Exists("users").
+				Where("email").
+				OrWhere("id").
+				Query(),
 			ExpectedSQL: "SELECT EXISTS(SELECT true FROM users WHERE email = $1 OR id = $2)",
 			Doc:         "check user with this email exists or not",
 		},
