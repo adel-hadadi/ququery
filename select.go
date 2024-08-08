@@ -24,10 +24,6 @@ func Select(table string) *SelectQuery {
 	return s
 }
 
-func (q *SelectQuery) addCondition(ws whereStructure) {
-	q.conditions = append(q.conditions, ws)
-}
-
 func (q *SelectQuery) Table(table string) *SelectQuery {
 	q.table = table
 
