@@ -10,7 +10,7 @@ import (
 func TestDeleteQuery_Where(t *testing.T) {
 	testcases := testutil.Testcases{
 		"delete query with condition": testutil.Testcase{
-			Query:       ququery.Delete("users").Where("email").OrWhere("id"),
+			Query:       ququery.Delete("users").Where("email").OrWhere("id").Query(),
 			ExpectedSQL: "DELETE FROM users WHERE email = $1 OR id = $2",
 			Doc:         "delete user with this email or id",
 		},

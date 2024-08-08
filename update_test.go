@@ -13,7 +13,8 @@ func TestUpdateQuery_Update(t *testing.T) {
 			Query: ququery.Update("users").
 				Where("id").
 				OrWhere("email").
-				Set("first_name", "last_name"),
+				Set("first_name", "last_name").
+				Query(),
 			ExpectedSQL: "UPDATE users SET first_name = $1, last_name = $2 WHERE id = $3 OR email = $4",
 			Doc:         "simple update query",
 		},
