@@ -11,10 +11,11 @@ type SelectQuery struct {
 	table   string
 	columns []string
 	WhereContainer[*SelectQuery]
-	joins     [][]string
-	orderBy   []string
-	hasLimit  bool
-	hasOffset bool
+	joins            [][]string
+	orderBy          []string
+	hasLimit         bool
+	hasOffset        bool
+	withoutRebinding bool
 }
 
 func Select(table string) *SelectQuery {
@@ -110,11 +111,11 @@ func (q *SelectQuery) prepareSelectQuery() string {
 func (q *SelectQuery) Query() string {
 	query := q.prepareSelectQuery()
 
-	return sqlx.Rebind(sqlx.DOLLAR, query)
-}
+	if q.withoutRebinding {
+		return query
+	}
 
-func (q *SelectQuery) QueryWithoutRebinding() string {
-	return q.prepareSelectQuery()
+	return sqlx.Rebind(sqlx.DOLLAR, query)
 }
 
 func (q *SelectQuery) prepareJoinQuery(joins [][]string) string {

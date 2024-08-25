@@ -71,8 +71,10 @@ func TestWhereContainer_WhereInSubquery(t *testing.T) {
 					OrderBy("total_price", "desc").
 					Limit().
 					Query()
-			}).Query(),
-			ExpectedSQL: "SELECT * FROM users WHERE users.id IN (SELECT user_id FROM orders ORDER BY total_price DESC LIMIT $1)",
+			}).
+				Where("id").
+				Query(),
+			ExpectedSQL: "SELECT * FROM users WHERE users.id IN (SELECT user_id FROM orders ORDER BY total_price DESC LIMIT $1) AND id = $2",
 			Doc:         "select query with where in subquery to other table",
 		},
 	}
