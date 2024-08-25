@@ -30,8 +30,8 @@ type (
 
 const (
 	rightJoin joinType = "RIGHT"
-	leftJoin           = "LEFT"
-	innerJoin          = "INNER"
+	leftJoin  joinType = "LEFT"
+	innerJoin joinType = "INNER"
 )
 
 func Select(table string) *SelectQuery {
