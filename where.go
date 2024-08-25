@@ -255,9 +255,11 @@ func (c *WhereContainer[T]) WhereGroup(f func(subQuery MultiWhere) string) T {
 //	    log.Println(query) => SELECT * FROM users WHERE users.id IN (SELECT user_id FROM orders ORDER BY total_price DESC LIMIT $1)
 func (c *WhereContainer[T]) WhereInSubquery(column string, subQuery func(q SelectQuery) string) T {
 	c.conditions = append(c.conditions, whereStructure{
-		rawQuery: fmt.Sprintf("%s IN (%s)", column, subQuery(SelectQuery{})),
-		isAnd:    true,
-		isRaw:    true,
+		rawQuery: fmt.Sprintf("%s IN (%s)", column, subQuery(SelectQuery{
+			withoutRebinding: true,
+		})),
+		isAnd: true,
+		isRaw: true,
 	})
 
 	return c.self
