@@ -7,16 +7,32 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type SelectQuery struct {
-	table   string
-	columns []string
-	WhereContainer[*SelectQuery]
-	joins            [][]string
-	orderBy          []string
-	hasLimit         bool
-	hasOffset        bool
-	withoutRebinding bool
-}
+type (
+	SelectQuery struct {
+		table   string
+		columns []string
+		WhereContainer[*SelectQuery]
+		joins            []join
+		orderBy          []string
+		hasLimit         bool
+		hasOffset        bool
+		withoutRebinding bool
+	}
+
+	joinType string
+
+	join struct {
+		table       string
+		constraints string
+		jType       joinType
+	}
+)
+
+const (
+	rightJoin joinType = "RIGHT"
+	leftJoin           = "LEFT"
+	innerJoin          = "INNER"
+)
 
 func Select(table string) *SelectQuery {
 	s := &SelectQuery{table: table}
@@ -39,8 +55,50 @@ func (q *SelectQuery) Columns(columns ...string) *SelectQuery {
 	return q
 }
 
-func (q *SelectQuery) Join(table string, conditions ...string) *SelectQuery {
-	q.joins = append(q.joins, append([]string{table}, conditions...))
+// Join method used to add inner join to your queries
+//
+// Example:
+//
+//	query := ququery.Select("users").Join("posts", "posts.user_id = users.id").Query()
+//	log.Println(query) => SELECT * FROM users INNER JOIN posts ON posts.user_id = users.id
+func (q *SelectQuery) Join(table, constraints string) *SelectQuery {
+	q.joins = append(q.joins, join{
+		table:       table,
+		constraints: constraints,
+		jType:       innerJoin,
+	})
+
+	return q
+}
+
+// LeftJoin method used to add left join to your queries
+//
+// Example:
+//
+//	query := ququery.Select("users").LeftJoin("posts", "posts.user_id = users.id").Query()
+//	log.Println(query) => SELECT * FROM users LEFT JOIN posts ON posts.user_id = users.id
+func (q *SelectQuery) LeftJoin(table, constraints string) *SelectQuery {
+	q.joins = append(q.joins, join{
+		table:       table,
+		constraints: constraints,
+		jType:       leftJoin,
+	})
+
+	return q
+}
+
+// RightJoin method used to add right join to your queries
+//
+// Example:
+//
+//	query := ququery.Select("users").RightJoin("posts", "posts.user_id = users.id").Query()
+//	log.Println(query) => SELECT * FROM users RIGHT JOIN posts ON posts.user_id = users.id
+func (q *SelectQuery) RightJoin(table, constraints string) *SelectQuery {
+	q.joins = append(q.joins, join{
+		table:       table,
+		constraints: constraints,
+		jType:       rightJoin,
+	})
 
 	return q
 }
@@ -50,9 +108,10 @@ func (q *SelectQuery) With(entities ...string) *SelectQuery {
 	for _, entity := range entities {
 		table := findTableFromEntity(entity)
 
-		q.joins = append(q.joins, []string{
-			table,
-			fmt.Sprintf("%s.id = %s.%s", table, q.table, entity+"_id"),
+		q.joins = append(q.joins, join{
+			table:       table,
+			constraints: fmt.Sprintf("%s.id = %s.%s", table, q.table, entity+"_id"),
+			jType:       leftJoin,
 		})
 	}
 
@@ -118,14 +177,15 @@ func (q *SelectQuery) Query() string {
 	return sqlx.Rebind(sqlx.DOLLAR, query)
 }
 
-func (q *SelectQuery) prepareJoinQuery(joins [][]string) string {
+func (q *SelectQuery) prepareJoinQuery(joins []join) string {
 	var joinQuery string
 
 	for _, join := range joins {
 		joinQuery += fmt.Sprintf(
-			" LEFT JOIN %s ON %s",
-			join[0],
-			strings.Join(join[1:], " AND "),
+			" %s JOIN %s ON %s",
+			join.jType,
+			join.table,
+			join.constraints,
 		)
 	}
 

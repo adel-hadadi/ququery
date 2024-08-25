@@ -48,14 +48,34 @@ func TestSelectQuery_Where(t *testing.T) {
 
 func TestSelectQuery_Join(t *testing.T) {
 	testcases := testutil.Testcases{
-		"simple join on select": testutil.Testcase{
+		"inner join": testutil.Testcase{
 			Query: ququery.Select("users").
 				Columns("id").
 				Join("wallets", "wallets.id = users.id").
 				Query(),
-			ExpectedSQL:  "SELECT id FROM users LEFT JOIN wallets ON wallets.id = users.id",
+			ExpectedSQL:  "SELECT id FROM users INNER JOIN wallets ON wallets.id = users.id",
 			ExpectedArgs: nil,
 			Doc:          "simple select on users table and load users wallet",
+		},
+
+		"right join": testutil.Testcase{
+			Query: ququery.Select("users").
+				Columns("id").
+				RightJoin("wallets", "wallets.id = users.id").
+				Query(),
+			ExpectedSQL:  "SELECT id FROM users RIGHT JOIN wallets ON wallets.id = users.id",
+			ExpectedArgs: nil,
+			Doc:          "simple select on users table and load users wallet with right join",
+		},
+
+		"left join": testutil.Testcase{
+			Query: ququery.Select("users").
+				Columns("id").
+				LeftJoin("wallets", "wallets.id = users.id").
+				Query(),
+			ExpectedSQL:  "SELECT id FROM users LEFT JOIN wallets ON wallets.id = users.id",
+			ExpectedArgs: nil,
+			Doc:          "simple select on users table and load users wallet with right join",
 		},
 	}
 
