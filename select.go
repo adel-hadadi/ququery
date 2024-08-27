@@ -32,6 +32,12 @@ const (
 	rightJoin joinType = "RIGHT"
 	leftJoin  joinType = "LEFT"
 	innerJoin joinType = "INNER"
+
+	// DESC sort direction for descending
+	DESC string = "DESC"
+
+	// ASC sort direction for ascending
+	ASC string = "ASC"
 )
 
 func Select(table string) *SelectQuery {

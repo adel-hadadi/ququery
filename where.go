@@ -246,7 +246,7 @@ func (c *WhereContainer[T]) WhereGroup(f func(subQuery MultiWhere) string) T {
 //	     query := ququery.Select("users").WhereInSubquery("users.id", func(q ququery.SelectQuery) string {
 //		    return q.Table("orders").
 //			    Columns("user_id").
-//			    OrderBy("total_price", "desc").
+//			    OrderBy("total_price", ququery.DESC).
 //			    Limit().
 //			    Query()
 //	        }).
@@ -259,6 +259,32 @@ func (c *WhereContainer[T]) WhereInSubquery(column string, subQuery func(q Selec
 			withoutRebinding: true,
 		})),
 		isAnd: true,
+		isRaw: true,
+	})
+
+	return c.self
+}
+
+// OrWhereInSubquery method allows you to add an "or" clause to WhereInSubquery condition.
+//
+// Example:
+//
+//	     query := ququery.Select("users").Where("age", ">=").WhereInSubquery("users.id", func(q ququery.SelectQuery) string {
+//		    return q.Table("orders").
+//			    Columns("user_id").
+//			    OrderBy("total_price", ququery.DESC).
+//			    Limit().
+//			    Query()
+//	        }).
+//	        Query()
+//
+//	    log.Println(query) => SELECT * FROM users WHERE age >= OR users.id IN (SELECT user_id FROM orders ORDER BY total_price DESC LIMIT $1)
+func (c *WhereContainer[T]) OrWhereInSubquery(column string, subQuery func(q SelectQuery) string) T {
+	c.conditions = append(c.conditions, whereStructure{
+		rawQuery: fmt.Sprintf("%s IN (%s)", column, subQuery(SelectQuery{
+			withoutRebinding: true,
+		})),
+		isAnd: false,
 		isRaw: true,
 	})
 

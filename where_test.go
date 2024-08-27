@@ -68,7 +68,7 @@ func TestWhereContainer_WhereInSubquery(t *testing.T) {
 			Query: ququery.Select("users").WhereInSubquery("users.id", func(q ququery.SelectQuery) string {
 				return q.Table("orders").
 					Columns("user_id").
-					OrderBy("total_price", "desc").
+					OrderBy("total_price", ququery.DESC).
 					Limit().
 					Query()
 			}).
@@ -76,6 +76,15 @@ func TestWhereContainer_WhereInSubquery(t *testing.T) {
 				Query(),
 			ExpectedSQL: "SELECT * FROM users WHERE users.id IN (SELECT user_id FROM orders ORDER BY total_price DESC LIMIT $1) AND id = $2",
 			Doc:         "select query with where in subquery to other table",
+		},
+		"query with orWhereInSubquery": {
+			Query: ququery.Select("users").Where("role_id").OrWhereInSubquery("users.id", func(q ququery.SelectQuery) string {
+				return q.Table("orders").
+					Columns("user_id").
+					OrderBy("orders.id", ququery.ASC).
+					Query()
+			}).Query(),
+			ExpectedSQL: "SELECT * FROM users WHERE role_id = $1 OR users.id IN (SELECT user_id FROM orders ORDER BY orders.id ASC)",
 		},
 	}
 
