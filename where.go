@@ -155,7 +155,7 @@ func (c *WhereContainer[T]) WhereLike(column string) T {
 	c.conditions = append(c.conditions, whereStructure{
 		column:   column,
 		operator: "LIKE",
-		isAnd:    false,
+		isAnd:    true,
 	})
 
 	return c.self
