@@ -1,244 +1,255 @@
-[![Go Report Card](https://goreportcard.com/badge/github.com/adel-hadadi/ququery)](https://goreportcard.com/report/github.com/adel-hadadi/ququery) 
+[![Go Report Card](https://goreportcard.com/badge/github.com/adel-hadadi/ququery)](https://goreportcard.com/report/github.com/adel-hadadi/ququery)
 [![codecov](https://codecov.io/github/adel-hadadi/ququery/graph/badge.svg?token=IkdEDjVmb4)](https://codecov.io/github/adel-hadadi/ququery)
 
 # QuQuery: Golang SQL Builder
 
 ```
-   ____                                   
+   ____
   / __ \__  ______ ___  _____  _______  __
  / / / / / / / __ `/ / / / _ \/ ___/ / / /
-/ /_/ / /_/ / /_/ / /_/ /  __/ /  / /_/ / 
-\___\_\__,_/\__, /\__,_/\___/_/   \__, /  
-              /_/                /____/   
+/ /_/ / /_/ / /_/ / /_/ /  __/ /  / /_/ /
+\___\_\__,_/\__, /\__,_/\___/_/   \__, /
+              /_/                /____/
 
 ```
 
 ## About
-QuQuery is simple and efficient query builder that provide zero dependency and zero type reflection in your code base so come to make our repositories more beautiful 😉.
 
-## Why Ququery builted
+QuQuery is simple and efficient SQL databases query builder that provide zero dependency and zero type reflection
+in your code base to make repositories more readable for first look.
+
+## Why i make `Ququery` package
+
 When I was learning Golang, I noticed that many people coding in Golang for the first time were using GORM. However, after a short period of using GORM, I found myself dealing with convoluted code that I couldn't understand, and it often didn't work as expected.
 
 I searched for other solutions and discovered that in many large companies and projects, programmers prefer to use pure SQL queries with the standard database/sql package. This approach avoids several issues commonly encountered with GORM:
 
 1. **Performance Overhead**:
-GORM introduces an additional layer of abstraction which can result in performance overhead compared to writing raw SQL queries. This can be significant in high-performance applications.
+   GORM introduces an additional layer of abstraction which can result in performance overhead compared to writing raw SQL queries. This can be significant in high-performance applications.
 
 2. **Complex Queries**:
-For complex queries involving multiple joins, subqueries, and custom SQL, GORM's abstraction can become cumbersome and harder to manage, often requiring raw SQL anyway.
+   For complex queries involving multiple joins, subqueries, and custom SQL, GORM's abstraction can become cumbersome and harder to manage, often requiring raw SQL anyway.
 
 3. **Debugging Difficulties**:
-Debugging GORM issues can be challenging because it abstracts away the SQL, making it harder to understand what exact queries are being generated and executed.
+   Debugging GORM issues can be challenging because it abstracts away the SQL, making it harder to understand what exact queries are being generated and executed.
 
 4. **Code Complexity** :
-Over time, as projects grow, the GORM code can become complex and harder to maintain, especially if it's not used consistently across the codebase.
+   Over time, as projects grow, the GORM code can become complex and harder to maintain, especially if it's not used consistently across the codebase.
 
 After a long time of writing SQL queries, my coworkers and I grew tired of writing repetitive queries. To solve this issue, I decided to create `ququery`—a query builder for Golang. This tool aims to simplify the process of building SQL queries, making your code more readable and maintainable, while avoiding the aforementioned problems with GORM.
 
 ## Installation And Usage
+
 For installing ququery in your project should run below command in root of project.
-``` shel
+
+```shel
 go get github.com/adel-hadadi/ququery@latest
 ```
 
 Every database operation such as (`UPDATE`, `INSERT`, `DELETE`, `SELECT`) in ququery have specific methods and they can be different from other one so let's explain each operation methods one by one.
 
-## Select
-first and most important operation that exists is `select` query that come with some cool methods. For creating new select query use below example:
+## Select Statements
+
+### Specifying a Select Clause
+
+You may not always want to select all columns from database table.
+Using the `Columns` method you can specify each column that you want to fetch from database.
+
 ```go
-package main
+query := ququery.Select("table_name").Columns("id", "name", "email").Query()
 
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Select("table_name")
-}
-```
-the above code return a `SelectQuery` struct that can call select query method on this structure.
-
-### Columns
-This method get a list of expected columns. If want to select all columns just don't call `Columns` method the `ququery` automatically know that if columns not specified should select all columns.
-```go
-package main
-
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Select("users").Columns("id", "name", "email").Query()
-    // query => SELECT id, name, email FROM users
-
-    query = ququery.Select("users").Query()
-    // query => SELECT * FROM users
-}
+log.Println(query) // query => SELECT id, name, email FROM table_name
 ```
 
-### Where
-This method can use different ways. The first one is just a simple where that should just specify column and automatically operation is (column = $1) but second way you can specify operation type (`!=`, `LIKE`).
+For situations that you want to fetch all columns you can call `Select` method without `Columns`.
+
+## Joins
+
+The query builder also be used to add join clauses to your queries.
+To perform a basic inner join, you may use the `Join` method on a query builder instance.
+The first arguments passed to `Join` method is the name of the table you need to join to,
+while the second argument specify the column constraints for the join.
+You may even join multiple tables in a single query:
 
 ```go
-package main
+query := ququery.Select("users").
+    Join("posts", "posts.user_id = users.id").
+    Query()
 
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Select("users").Where("id").Query()
-    // query => SELECT * FROM users WHERE id = $1
-
-    query = ququery.Select("users").Where("id", "!=").Query()
-    // query => SELECT * FROM users WHERE id != $1
-}
+log.Println(query) // query => SELECT * FROM users INNER JOIN posts ON posts.user_id = users.id
 ```
 
-Also can use `OrWhere` for checking that any one condition is true
+### Left join / Right join
+
+if you would like to perform `left join` or `right join` instead of an `inner join`,
+use `LeftJoin` or `RightJoin` methods. This methods have the same signature as the
+`Join` method:
+
 ```go
-package main
+leftJoin := ququery.Select("users").LeftJoin("posts", "posts.user_id = users.id").Query()
+log.Println(leftJoin) // query => SELECT * FROM users LEFT JOIN posts ON posts.user_id = users.id
 
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Select("users").Where("id").OrWhere("email").Query()
-    // query => SELECT * FROM users WHERE id = $1 OR email = $2
-}
-
+rightJoin := ququery.Select("users").RightJoin("posts", "posts.user_id = users.id").Query()
+log.Println(rightJoin) // query => SELECT * FROM users RIGHT JOIN posts ON posts.user_id = users.id
 ```
 
-For `Postgresql` users we have `StrPos` method to check if value is not an empty string, find the position from where the substring is being matched within the string also this. 
+### With
+
+Also if you want to load a simple belongs to relations you can use `With` method.
+This method take a list of entities and then automatically load relations:
 
 ```go
-package main
-
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Select("users").StrPos("name").Query()
-    // query => SELECT * FROM users WHERE (STRPOS(name, %1) > 0 OR $2 = '')
-}
-
+query := ququery.Select("users").With("role", "wallet").Query()
+log.Println(query) // query => SELECT * FROM users LEFT JOIN roles ON roles.id = user.role_id LEFT JOIN wallets ON wallets.id = users.wallet_id
 ```
 
-For using `WHERE IN (subquery)` query can use `WhereInSubquery` that take column and a function with `SelectQuery` structure and should return a query.
+## Basic Where Clauses
+
+### Where Clauses
+
+You may use the query builder's `Where` method to add "where" clauses to the query.
+The most basic call to the `Where` method requires two arguments. The first argument
+is the name of the column. The second argument is an operator, which can be any of
+the database's supported operators.
+
+For example, the following query retrieves users where the value of the votes column
+is equal to $1 and the value of the age column is greater than $2:
 
 ```go
+query := ququery.Select("users").
+    Where("votes", "=").
+    Where("age", ">").
+    Query()
 
-package main
-
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Select("users").
-        WhereInSubquery("id", func (q SelectQuery) string {
-            return q.Table("orders").
-                Column("user_id")
-                Where("price", ">=").
-                Query()
-        }).
-        Query()
-    // query => SELECT * FROM users WHERE id IN (SELECT user_id FROM orders where price >= $1)
-}
-
+log.Println(query) // query => SELECT * FROM users WHERE votes = $1 AND age > $2
 ```
 
-### Join
-With Join method can load relations.
+For convenience, if you want to verify that a column is `=` to a given value, you may call `Where` method with just column name.
+`Ququery` will assume you would like to use the `=` operator:
 
 ```go
-package main
+query := ququery.Select("users").
+    Where("votes").
+    Query()
 
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Select("products").Join("categories", "categories.id = product.category_id").Query()
-    // query => SELECT * FROM users LEFT JOIN categories ON categories.id = product.category_id
-}
+log.Pritln(query) // query => SELECT * FROM users WHERE votes = $1
 ```
 
-But if you want to load one to many relations like above you can just simply use `With` method that take list of entity names and load them.
+## Or Where Clauses
+
+When chaining together calls to the query builder's `Where` method, the "where" clauses will be joined together using the `AND` operator. However, you may use the `OrWhere` method to join a clause to the query using the `OR` operator. The `OrWhere` method accepts the same arguments as the `Where` method:
 
 ```go
-package main
+query := ququery.Select("users").
+    Where("votes").
+    OrWhere("name")
+    Query()
 
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Select("products").
-        With("category", "warehouse", "brand").
-        Query()
-    // query => SELECT * FROM users LEFT JOIN categories ON categories.id = products.category_id LEFT JOIN warehouses ON warehouses.id = products.warehouse_id LEFT JOIN brands.id = products.brand_id
-}
+log.Pritln(query) // query => SELECT * FROM users WHERE votes = $1 OR name = $2
 ```
 
-Select query have many other methods that we list them below.
+If you need to group multiple where clauses together you can use `WhereGroup` method:
 
-| Method  | Description                                                                                                |
-| ------- | ---------------------------------------------------------------------------------------------------------- |
-| OrderBy | take column name and sort direction to order items                                                         |
-| Limit   | for taking a limited rows from database                                                                    |
-| Offset  | specify where to start taking rows                                                                         |
-| Table   | if you get `SelectQuery` structure with different way `Select` method, can set table name with this method |
-| WhereNull   | get rows where specific column value is null |
-| WhereNotNull   | get rows where specific column value is not null |
-
-## Insert
-Insert method give a `InsertQuery` structure which come with low number of methods
-
-### Into
-First and important method that come with `InsertQuery` structure is this method that specify insert query columns.
 ```go
-package main
+query := ququery.Select("users").
+    Where("votes").
+    WhereGroup(func(subQuery MultiWhere) string {
+        return subQuery.Where("name").
+            OrWhere("votes", ">").
+            Query()
+    }).
+    Query()
 
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Insert("users").Into("name", "email").Query()
-    // query => INSERT INTO users (name, email) VALUES($1, $2)
-}
+log.Pritln(query) // query => SELECT * FROM users WHERE votes = $1 OR name = $2
 ```
 
-### Returning
-This method specify columns that you want to return after that insert query successfully executed.
+## Additional Where Clause
+
+### WhereLike / OrWhereLike
+
+The `WhereLike` method allows you to add "LIKE" clauses to query for
+pattern matching. These methods provide a database-agnostic way
+performing string matching queries, with the ability to toggle
+case-sensitivity. By default, string matching is case-insensitive:
+
 ```go
-package main
-
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Insert("users").
-        Into("name", "email").
-        Returning("id").
-        Query()
-    // query => INSERT INTO users (name, email) VALUES ($1, $2) RETURNING (id)
-}
+query := ququery.Select("users").WhereLike("name").Query()
+log.Println(query) // query => SELECT * FROM users WHERE name LIKE $1
 ```
 
-## Update
-### Set
-For specify columns that you want change them you should use `Set` method.
-Also `UpdateQuery` have `Where` and `OrWhere` method that can be used together.
+The `OrWhereLike` method allows you to add an "or"A clause with a LIKE
+condition:
+
 ```go
-package main
+query := ququer.Select("users").
+    Where("votes", ">").
+    OrWhereLike("name").
+    Query()
 
-import "github.com/adel-hadadi/ququery"
-
-func main() {
-    query := ququery.Update("users").
-        set("name").
-        Where("id").
-        Query()
-    // query => UPDATE users SET name = $1 WHERE id = $2
-}
+log.Println(query) // query => SELECT * FROM users WHERE votes > $1 OR WHERE name LIKE $2
 ```
 
-## Exists
-Exists query is used for checking that any row with exists with given conditions or not. This query have `Where` and `OrWhere` method.
+### WhereNull / WhereNotNull / OrWhereNull / OrWhereNotNull
+
+The `WhereNull` method verifies that the value of the given column is `NULL`:
+
 ```go
-package main
+query := ququery.Select("users").WhereNull("updated_at").Query()
+log.Println(query) // query => SELECT * FROM users WHERE updated_at IS NULL
+```
 
-import "github.com/adel-hadadi/ququery"
+The `WhereNotNull` method verifies that the column's value is not `NULL`:
 
-func main() {
-    query := ququery.Exists("users").
-        Where("email").
-        Query()
-    // query => SELECT EXISTS (SELECT true FROM users WHERE email = $1)
-}
+```go
+query := ququery.Select("users").WhereNotNull("updated_at").Query()
+log.Println(query) // query => SELECT * FROM users WHERE updated_at IS NOT NULL
+```
+
+# Ordering, Grouping, Limit and offset
+
+## Ordering
+
+### The `OrderBy` Method
+
+The `OrderBy` method allows you to sort the results of the query by a given column. The First argument accepted by the `OrderBy` method should be the column you wish to sort by, while the second argument determines the direction of the sort and may not either `asc` or `desc`:
+
+```go
+query := ququery.Select("users").OrderBy("name", "desc").Query()
+log.Println(query) // query => SELECT * FROM users ORDER BY name DESC
+```
+
+## Limit and Offset
+
+You may use the `Limit` and `Offset` methods to limit the number of results returned from the query or to skip a given number of results in the query:
+
+```go
+query := ququery.Select("users").Limit().Offset().Query()
+log.Println(query) // query => SELECT * FROM users LIMIT $1 OFFSET $2
+```
+
+# Insert Statements
+
+The query builder also provides an `Insert` method that may be used to insert records into database table. The `Insert` method accepts a list of column names.
+
+```go
+query := ququery.Insert("users").Into("email", "votes").Query()
+log.Println(query) // query => INSERT INTO users (email, votes) VALUES ($1, $2)
+```
+
+# Update Statements
+
+In addition to inserting records into the database, the query builder can also update existing records using the `Update` method. The `Update` method, like the `Insert` method, accepts a list of columns that should be updated:
+
+```go
+query := ququery.Update("users").Where("id").Set("email", "email_verified").Query()
+log.Println(query) // query => UPDATE users SET email = $1, email_verified = $2 WHERE id = $3
+```
+
+# Delete Statements
+
+The query builder's `Delete` method may be used to delete records from the table:
+
+```go
+query := ququery.Delete("users").Where("votes", ">").Query()
+log.Println(query) // query => DELETE FROM users WHERE votes > $1
 ```
