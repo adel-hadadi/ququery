@@ -42,6 +42,11 @@ func TestWhereContainer_TextSearch(t *testing.T) {
 			ExpectedSQL: "SELECT * FROM users WHERE name LIKE $1",
 			Doc:         "select users where name is like x",
 		},
+		"check and clause in whereLike": {
+			Query:       ququery.Select("users").Where("age", ">").WhereLike("name").Query(),
+			ExpectedSQL: "SELECT * FROM users WHERE age > $1 AND name LIKE $2",
+			Doc:         "select users where age is more than $1 and name is like $2",
+		},
 		"query with orWhereLike": {
 			Query: ququery.Select("users").
 				Where("id").
